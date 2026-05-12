@@ -1,9 +1,0 @@
-new AmandaArcade.Arcade({
-  chapter: "Bab 12",
-  title: "Untuk Amanda",
-  mode: "journey",
-  intro: "Perjalanan hati terakhir untuk Amanda.",
-  goal: 6,
-  lives: 3,
-  next: "../../index.html"
-});
