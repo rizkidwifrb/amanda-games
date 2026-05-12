@@ -1,0 +1,9 @@
+new AmandaArcade.Arcade({
+  chapter: "Bab 1",
+  title: "Dunia Kecil Amanda",
+  mode: "maze",
+  intro: "Kumpulkan buku kecil di labirin lembut.",
+  goal: 6,
+  lives: 3,
+  next: "../bab-2-rak-buku-amanda/index.html"
+});

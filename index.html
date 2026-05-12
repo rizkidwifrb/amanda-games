@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Amanda Interactive Arcade</title>
+  <link rel="stylesheet" href="shared/tailwind.css">
+  <link rel="stylesheet" href="shared/arcade.css">
+  <style>
+    html, body { overflow: auto; }
+    .home { min-height: 100svh; padding: 18px; }
+    .hero { max-width: 920px; margin: 0 auto 16px; padding: 10px 0 12px; position: relative; }
+    .hero::after { content: ""; position: absolute; right: 6%; top: 8px; width: 86px; height: 86px; border-radius: 28px; background: radial-gradient(circle at 32% 25%, #fff 0 16px, transparent 17px), linear-gradient(180deg, #ffd36e, #ff9fc5); box-shadow: 0 6px 0 rgba(255,159,197,.22); }
+    .hero h1 { font-size: clamp(34px, 10vw, 72px); line-height: .92; max-width: 720px; color: #285579; text-shadow: 0 3px 0 rgba(255,255,255,.72); }
+    .hero p { color: var(--muted); font-weight: 800; max-width: 560px; line-height: 1.45; }
+    .chapter-grid { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; padding-bottom: 20px; }
+    .chapter-card { min-height: 112px; text-decoration: none; color: var(--ink); border: 3px solid rgba(255,255,255,.95); border-radius: 18px; padding: 14px; background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(232,246,255,.88)); box-shadow: 0 5px 0 rgba(79,158,232,.16), 0 9px 14px rgba(73,109,146,.1); display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: center; }
+    .chapter-card:nth-child(3n+1) { background: linear-gradient(180deg, #fff, #e5f7ff); }
+    .chapter-card:nth-child(3n+2) { background: linear-gradient(180deg, #fff, #fff0c8); }
+    .chapter-card:nth-child(3n+3) { background: linear-gradient(180deg, #fff, #ffe2ef); }
+    .chapter-card svg { width: 58px; height: 58px; padding: 9px; border-radius: 18px; background: radial-gradient(circle at 32% 24%, #fff 0 10px, transparent 11px), linear-gradient(180deg, #ffffff, #cdefff); border: 2px solid rgba(255,255,255,.94); box-shadow: 0 4px 0 rgba(255,180,95,.18); }
+    .chapter-card strong { display: block; font-size: 18px; letter-spacing: 0; }
+    .chapter-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <main class="home min-h-svh p-[18px]">
+    <section class="hero relative mx-auto mb-4 max-w-[920px] py-3">
+      <div class="chapter-kicker">Amanda Interactive Arcade</div>
+      <h1 class="max-w-[720px] text-[clamp(34px,10vw,72px)] font-black leading-[.92]">12 Mini Game Cute untuk Novel Amanda</h1>
+      <p>Arcade mobile portrait ringan, pastel, glossy halus, dengan audio Web Audio API dan kontrol sentuh responsif.</p>
+    </section>
+    <section class="chapter-grid mx-auto grid max-w-[920px] grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-2.5 pb-5">
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-1-dunia-kecil-amanda/index.html"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="12" height="16" rx="3" fill="#89c8ff"/><path d="M9 4v16" stroke="#fff" stroke-width="1.6"/><path d="M11 8h4M11 12h4" stroke="#36506a" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 1</small><strong>Dunia Kecil Amanda</strong><span>Kumpulkan buku kecil di labirin lembut.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-2-rak-buku-amanda/index.html"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="12" height="16" rx="3" fill="#89c8ff"/><path d="M9 4v16" stroke="#fff" stroke-width="1.6"/><path d="M11 8h4M11 12h4" stroke="#36506a" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 2</small><strong>Rak Buku Amanda</strong><span>Tangkap buku jatuh, hindari noda tinta.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-3-chocolova/index.html"><svg viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="12" rx="3" fill="#b87862"/><path d="M5 10h14M10 6v12M15 6v12" stroke="#fff7e8" stroke-width="1.2"/><path d="M7 4h10l-2 3H9z" fill="#ff9fc5"/></svg><div><small>Bab 3</small><strong>Chocolova</strong><span>Pilih bahan Chocolova yang benar.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-4-restoran-hangat/index.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="#fff7e8" stroke="#89c8ff" stroke-width="1.8"/><path d="M8 12h8M10 9h4M10 15h4" stroke="#ff9fc5" stroke-width="1.7" stroke-linecap="round"/></svg><div><small>Bab 4</small><strong>Restoran Hangat</strong><span>Antar menu ke meja yang tepat.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-5-gelembung-kepribadian/index.html"><svg viewBox="0 0 24 24"><path d="M9 6a3 3 0 0 0-3 3v6a3 3 0 0 0 5 2 3 3 0 0 0 5-2V8a3 3 0 0 0-5-2 3 3 0 0 0-2 0z" fill="#ffd7e7"/><path d="M11 6v12M7 11h4M13 10h4M13 14h4" stroke="#36506a" stroke-width="1.1" stroke-linecap="round"/></svg><div><small>Bab 5</small><strong>Gelembung Kepribadian</strong><span>Pecahkan gelembung emosi yang cocok.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-6-benteng-tenang/index.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#bfe3ff"/><path d="M8 12c2-2 6-2 8 0M9 15c1.6 1.4 4.4 1.4 6 0" stroke="#36506a" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 6</small><strong>Benteng Tenang</strong><span>Blokir pikiran negatif dengan tameng tenang.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-7-jalan-menuju-gramedia/index.html"><svg viewBox="0 0 24 24"><path d="M5 10h14v9H5z" fill="#fff"/><path d="M4 7h16l-2 4H6z" fill="#ff9fc5"/><path d="M8 19v-5h4v5M14 14h3" stroke="#36506a" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 7</small><strong>Jalan Menuju Gramedia</strong><span>Lari 3 jalur menuju toko buku.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-8-kejar-salah-paham/index.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff8f9c"/><path d="M9 10l6 5M15 10l-6 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><div><small>Bab 8</small><strong>Kejar Salah Paham</strong><span>Kabur dari salah paham, ambil hati.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-9-kata-tersembunyi/index.html"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="4" fill="#ffffff"/><path d="M8 10h8M8 14h5" stroke="#4f9ee8" stroke-width="1.7" stroke-linecap="round"/></svg><div><small>Bab 9</small><strong>Kata Tersembunyi</strong><span>Cari kepingan kata Amanda yang tersembunyi.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-10-kartu-ingatan/index.html"><svg viewBox="0 0 24 24"><path d="M12 19s-7-4.2-7-9a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 4.8-7 9-7 9z" fill="#ff8fbd"/><path d="M8 9.4c.4-1.2 1.4-1.7 2.4-1.5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 10</small><strong>Kartu Ingatan</strong><span>Cocokkan kartu ikon novel.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-11-hujan-kata/index.html"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="4" fill="#ffffff"/><path d="M8 10h8M8 14h5" stroke="#4f9ee8" stroke-width="1.7" stroke-linecap="round"/></svg><div><small>Bab 11</small><strong>Hujan Kata</strong><span>Tangkap kata baik yang jatuh.</span></div></a>
+      <a class="chapter-card grid min-h-28 grid-cols-[58px_1fr] items-center gap-3 rounded-[18px] border-[3px] border-white/95 p-3.5 no-underline" href="games/bab-12-untuk-amanda/index.html"><svg viewBox="0 0 24 24"><path d="M12 19s-7-4.2-7-9a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 4.8-7 9-7 9z" fill="#ff8fbd"/><path d="M8 9.4c.4-1.2 1.4-1.7 2.4-1.5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg><div><small>Bab 12</small><strong>Untuk Amanda</strong><span>Perjalanan hati terakhir untuk Amanda.</span></div></a>
+    </section>
+  </main>
+</body>
+</html>

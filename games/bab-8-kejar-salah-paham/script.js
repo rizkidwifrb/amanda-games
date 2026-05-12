@@ -1,0 +1,9 @@
+new AmandaArcade.Arcade({
+  chapter: "Bab 8",
+  title: "Kejar Salah Paham",
+  mode: "chase",
+  intro: "Kabur dari salah paham, ambil hati.",
+  goal: 45,
+  lives: 5,
+  next: "../bab-9-kata-tersembunyi/index.html"
+});
