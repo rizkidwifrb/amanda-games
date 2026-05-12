@@ -1,1 +1,0 @@
-body::before{content:"";position:fixed;inset:auto 10% 8% auto;width:90px;height:90px;border-radius:32px;background:rgba(255,255,255,.26);pointer-events:none}.game-wrap{min-height:310px}.chapter-kicker::after{content:" chase";color:var(--pink)}

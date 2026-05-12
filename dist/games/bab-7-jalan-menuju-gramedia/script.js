@@ -1,1 +1,0 @@
-new AmandaArcade.Arcade({chapter:"Bab 7",title:"Jalan Menuju Gramedia",mode:"runner",intro:"Lari 3 jalur menuju toko buku.",goal:12,lives:3,next:"../bab-8-kejar-salah-paham/index.html"});
