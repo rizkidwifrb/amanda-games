@@ -55,98 +55,89 @@
 
   class AudioTiny {
     constructor() {
-      this.ctx = null; this.musicOn = true; this.soundOn = true; this.buffers = {}; this.bgm = null;
-      this.master = null; this.musicGain = null; this.soundGain = null; this.ready = false; this.loading = {}; this.retryTimer = null;
+      this.musicOn = true;
+      this.soundOn = true;
+      this.ctx = null;
+      this.master = null;
+      this.soundGain = null;
       this.basePath = location.pathname.includes("/games/") ? "../../assets/audio/" : "assets/audio/";
-      this.version = "audio-v3";
+      this.version = "audio-v4";
       this.files = { bgm: "bgm.mp3", click: "click.wav", collect: "collect.wav", hit: "hit.wav", win: "win.wav", lose: "lose.wav" };
-      this.html = {}; this.htmlBgm = null;
-      this.makeHtmlAudio();
+      this.tracks = {};
+      this.bgm = null;
+      this.ready = false;
     }
-    makeHtmlAudio() {
-      if (typeof Audio === "undefined") return;
-      Object.entries(this.files).forEach(([name, file]) => {
-        const a = new Audio(this.basePath + file);
-        a.preload = "auto";
-        a.volume = name === "bgm" ? .28 : .55;
-        if (name === "bgm") { a.loop = true; this.htmlBgm = a; }
-        else this.html[name] = a;
-      });
+    url(file) {
+      return this.basePath + file + "?" + this.version;
     }
     init() {
-      if (!this.ctx) {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.master = this.ctx.createGain(); this.master.gain.value = .9; this.master.connect(this.ctx.destination);
-        this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0; this.musicGain.connect(this.master);
-        this.soundGain = this.ctx.createGain(); this.soundGain.gain.value = .55; this.soundGain.connect(this.master);
-      }
-      if (this.ctx.state === "suspended") this.ctx.resume();
       this.preload();
+      if (!this.ctx) {
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = .9;
+          this.master.connect(this.ctx.destination);
+          this.soundGain = this.ctx.createGain();
+          this.soundGain.gain.value = .75;
+          this.soundGain.connect(this.master);
+        } catch (_) {
+          this.ctx = null;
+        }
+      }
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
     }
     preload() {
       if (this.ready) return;
       this.ready = true;
       Object.entries(this.files).forEach(([name, file]) => {
-        this.loading[name] = true;
-        fetch(this.basePath + file + "?" + this.version)
-          .then(r => { if (!r.ok) throw new Error("audio not found"); return r.arrayBuffer(); })
-          .then(b => this.ctx.decodeAudioData(b))
-          .then(buf => { this.buffers[name] = buf; this.loading[name] = false; })
-          .catch(() => { this.loading[name] = false; });
+        const el = new Audio(this.url(file));
+        el.preload = "auto";
+        el.playsInline = true;
+        el.crossOrigin = "anonymous";
+        el.loop = name === "bgm";
+        el.volume = name === "bgm" ? .32 : .75;
+        this.tracks[name] = el;
+        if (name === "bgm") this.bgm = el;
+        try { el.load(); } catch (_) {}
       });
     }
     play(name, fallback = 520) {
       if (!this.soundOn) return;
       this.init();
-      const buf = this.buffers[name];
-      if (!buf) {
-        const a = this.html[name];
-        if (a) {
-          try { const clone = a.cloneNode(); clone.volume = .55; clone.currentTime = 0; clone.play().catch(() => this.beep(fallback, .07, "triangle", .035)); return; } catch (_) {}
-        }
-        return this.beep(fallback, .07, "triangle", .035);
-      }
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf; src.connect(this.soundGain); src.start();
+      const base = this.tracks[name];
+      if (!base) return this.beep(fallback, .09, "triangle", .08);
+      const sfx = base.cloneNode(true);
+      sfx.volume = .78;
+      sfx.playsInline = true;
+      sfx.currentTime = 0;
+      const p = sfx.play();
+      if (p && p.catch) p.catch(() => this.beep(fallback, .09, "triangle", .08));
     }
-    beep(freq = 420, dur = .08, type = "sine", gain = .05) {
+    beep(freq = 420, dur = .08, type = "sine", gain = .08) {
       if (!this.soundOn) return;
-      this.init();
+      if (!this.ctx) return;
       const o = this.ctx.createOscillator(), g = this.ctx.createGain();
       o.type = type; o.frequency.value = freq; g.gain.value = gain;
-      o.connect(g); g.connect(this.soundGain); o.start();
+      o.connect(g); g.connect(this.soundGain || this.ctx.destination); o.start();
       g.gain.exponentialRampToValueAtTime(.001, this.ctx.currentTime + dur);
       o.stop(this.ctx.currentTime + dur);
     }
     startMusic() {
       this.init();
-      if (!this.musicOn || this.bgm) return;
-      const buf = this.buffers.bgm;
-      if (!buf) {
-        if (this.htmlBgm) {
-          try { this.htmlBgm.volume = .28; this.htmlBgm.play().catch(() => {}); } catch (_) {}
-        }
-        if (!this.retryTimer) this.retryTimer = setTimeout(() => { this.retryTimer = null; this.startMusic(); }, 120);
-        return;
-      }
-      if (this.htmlBgm) { try { this.htmlBgm.pause(); this.htmlBgm.currentTime = 0; } catch (_) {} }
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf; src.loop = true; src.connect(this.musicGain); src.start();
-      this.bgm = src;
-      this.fadeMusic(.28, .35);
+      if (!this.musicOn || !this.bgm) return;
+      this.bgm.loop = true;
+      this.bgm.volume = .32;
+      const p = this.bgm.play();
+      if (p && p.catch) p.catch(() => {});
     }
     fadeMusic(target, dur = .22) {
-      if (!this.musicGain) return;
-      const t = this.ctx.currentTime;
-      this.musicGain.gain.cancelScheduledValues(t);
-      this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t);
-      this.musicGain.gain.linearRampToValueAtTime(target, t + dur);
+      if (!this.bgm) return;
+      this.bgm.volume = Math.max(0, Math.min(.45, target));
     }
     stopMusic() {
-      if (this.htmlBgm) { try { this.htmlBgm.pause(); } catch (_) {} }
-      if (!this.ctx || !this.bgm) return;
-      const src = this.bgm; this.fadeMusic(0, .25);
-      setTimeout(() => { try { src.stop(); } catch (_) {} if (this.bgm === src) this.bgm = null; }, 270);
+      if (!this.bgm) return;
+      try { this.bgm.pause(); } catch (_) {}
     }
   }
 

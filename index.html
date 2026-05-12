@@ -51,10 +51,10 @@
     (() => {
       const audio = window.AmandaArcade && new window.AmandaArcade.AudioTiny();
       if (!audio) return;
-      const unlock = () => { audio.init(); audio.startMusic(); };
+      const unlock = () => { audio.unlock(); audio.startMusic(); };
       document.addEventListener("pointerdown", unlock, { once: true, passive: true });
       document.querySelectorAll(".chapter-card").forEach(card => {
-        card.addEventListener("click", () => audio.play("click", 520));
+        card.addEventListener("click", () => { audio.unlock(); audio.play("click", 520); });
       });
     })();
   </script>

@@ -55,75 +55,191 @@
 
   class AudioTiny {
     constructor() {
-      this.ctx = null; this.musicOn = true; this.soundOn = true; this.buffers = {}; this.bgm = null;
-      this.master = null; this.musicGain = null; this.soundGain = null; this.ready = false; this.loading = {}; this.retryTimer = null;
-      this.basePath = location.pathname.includes("/games/") ? "../../assets/audio/" : "assets/audio/";
-      this.version = "audio-v3";
+      this.musicOn = localStorage.getItem("amandaMusicOff") !== "1";
+      this.soundOn = localStorage.getItem("amandaSoundOff") !== "1";
+      this.unlocked = false;
+      this.ctx = null;
+      this.master = null;
+      this.basePath = "/assets/audio/";
+      this.version = "audio-v7";
       this.files = { bgm: "bgm.mp3", click: "click.wav", collect: "collect.wav", hit: "hit.wav", win: "win.wav", lose: "lose.wav" };
+      this.tracks = {};
+      this.buffers = {};
+      this.loading = {};
+      this.bgm = null;
+      this.bgmSource = null;
+      this.bgmGain = null;
+      this.bgmStarting = false;
+      this.ready = false;
     }
+    url(file) { return this.basePath + file + "?" + this.version; }
     init() {
-      if (!this.ctx) {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.master = this.ctx.createGain(); this.master.gain.value = .9; this.master.connect(this.ctx.destination);
-        this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0; this.musicGain.connect(this.master);
-        this.soundGain = this.ctx.createGain(); this.soundGain.gain.value = .55; this.soundGain.connect(this.master);
-      }
-      if (this.ctx.state === "suspended") this.ctx.resume();
       this.preload();
+      if (!this.ctx) {
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = 1;
+          this.master.connect(this.ctx.destination);
+        } catch (_) { this.ctx = null; }
+      }
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+      this.loadBuffers();
     }
     preload() {
       if (this.ready) return;
       this.ready = true;
       Object.entries(this.files).forEach(([name, file]) => {
-        this.loading[name] = true;
-        fetch(this.basePath + file + "?" + this.version)
-          .then(r => { if (!r.ok) throw new Error("audio not found"); return r.arrayBuffer(); })
-          .then(b => this.ctx.decodeAudioData(b))
-          .then(buf => { this.buffers[name] = buf; this.loading[name] = false; })
-          .catch(() => { this.loading[name] = false; });
+        const el = document.createElement("audio");
+        el.src = this.url(file);
+        el.preload = "auto";
+        el.playsInline = true;
+        el.loop = name === "bgm";
+        el.volume = name === "bgm" ? 0.35 : 1;
+        el.setAttribute("data-amanda-audio", name);
+        el.style.position = "fixed";
+        el.style.left = "-9999px";
+        document.body.appendChild(el);
+        this.tracks[name] = el;
+        if (name === "bgm") this.bgm = el;
+        try { el.load(); } catch (_) {}
       });
+    }
+    loadBuffers() {
+      if (!this.ctx || location.protocol === "file:") return;
+      Object.entries(this.files).forEach(([name, file]) => {
+        if (this.buffers[name] || this.loading[name]) return;
+        this.loading[name] = true;
+        fetch(this.url(file))
+          .then(r => r.arrayBuffer())
+          .then(ab => this.ctx.decodeAudioData(ab))
+          .then(buf => { this.buffers[name] = buf; console.log("Amanda audio buffer ready:", name); })
+          .catch(err => console.warn("Amanda audio buffer failed:", name, err));
+      });
+    }
+    unlock() {
+      this.init();
+      this.unlocked = true;
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+      // Audible confirmation on first unlock, very short and soft.
+      if (!this._confirmed) {
+        this._confirmed = true;
+        setTimeout(() => this.play("click", 660), 30);
+      }
+      if (this.musicOn) setTimeout(() => this.startMusic(), 60);
     }
     play(name, fallback = 520) {
       if (!this.soundOn) return;
       this.init();
+      // Primary: decoded WebAudio buffer. This is the most reliable after localhost loading.
       const buf = this.buffers[name];
-      if (!buf) return this.beep(fallback, .07, "triangle", .035);
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf; src.connect(this.soundGain); src.start();
+      if (this.ctx && buf) {
+        try {
+          const src = this.ctx.createBufferSource();
+          const gain = this.ctx.createGain();
+          src.buffer = buf;
+          gain.gain.value = 0.95;
+          src.connect(gain);
+          gain.connect(this.master || this.ctx.destination);
+          src.start(0);
+          return;
+        } catch (_) {}
+      }
+      // Secondary: native audio tag.
+      const el = this.tracks[name];
+      if (el) {
+        try {
+          el.pause();
+          el.currentTime = 0;
+          el.muted = false;
+          el.volume = 1;
+          const p = el.play();
+          if (p && p.catch) p.catch(() => this.beep(fallback, .14, "square", .18));
+          // Also give a tiny WebAudio tick so the user can confirm sound is unlocked even before buffer decode finishes.
+          if (!this.buffers[name]) this.beep(fallback, .055, "triangle", .055);
+          return;
+        } catch (_) {}
+      }
+      this.beep(fallback, .14, "square", .18);
     }
-    beep(freq = 420, dur = .08, type = "sine", gain = .05) {
+    beep(freq = 520, dur = .12, type = "sine", gain = .12) {
       if (!this.soundOn) return;
-      this.init();
-      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-      o.type = type; o.frequency.value = freq; g.gain.value = gain;
-      o.connect(g); g.connect(this.soundGain); o.start();
-      g.gain.exponentialRampToValueAtTime(.001, this.ctx.currentTime + dur);
-      o.stop(this.ctx.currentTime + dur);
+      if (!this.ctx) return;
+      if (this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+      try {
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(gain, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(.001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.master || this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + dur);
+      } catch (_) {}
     }
     startMusic() {
       this.init();
-      if (!this.musicOn || this.bgm) return;
-      const buf = this.buffers.bgm;
-      if (!buf) {
-        if (!this.retryTimer) this.retryTimer = setTimeout(() => { this.retryTimer = null; this.startMusic(); }, 120);
+      // For this arcade, BGM should be ON by default whenever the player starts/interacts.
+      // This prevents old localStorage from silently keeping music off during testing.
+      this.musicOn = true;
+      localStorage.setItem("amandaMusicOff", "0");
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+      if (!this.musicOn) return;
+
+      // Primary: WebAudio looped buffer. More reliable than <audio> for small game BGM.
+      const startBufferLoop = () => {
+        if (!this.ctx || !this.buffers.bgm || this.bgmSource) return true;
+        try {
+          this.bgmSource = this.ctx.createBufferSource();
+          this.bgmGain = this.ctx.createGain();
+          this.bgmSource.buffer = this.buffers.bgm;
+          this.bgmSource.loop = true;
+          this.bgmGain.gain.value = 0.30;
+          this.bgmSource.connect(this.bgmGain);
+          this.bgmGain.connect(this.master || this.ctx.destination);
+          this.bgmSource.start(0);
+          console.log("Amanda BGM started: WebAudio loop");
+          return true;
+        } catch (err) {
+          console.warn("Amanda WebAudio BGM error:", err);
+          this.bgmSource = null;
+          this.bgmGain = null;
+          return false;
+        }
+      };
+
+      if (startBufferLoop()) return;
+
+      if (!this.loading.bgm && !this.buffers.bgm && this.ctx && location.protocol !== "file:") {
+        this.loading.bgm = true;
+        fetch(this.url(this.files.bgm))
+          .then(r => r.arrayBuffer())
+          .then(ab => this.ctx.decodeAudioData(ab))
+          .then(buf => { this.buffers.bgm = buf; this.loading.bgm = false; startBufferLoop(); })
+          .catch(err => { this.loading.bgm = false; console.warn("Amanda BGM buffer failed:", err); this.startMusicTagFallback(); });
         return;
       }
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf; src.loop = true; src.connect(this.musicGain); src.start();
-      this.bgm = src;
-      this.fadeMusic(.28, .35);
+
+      this.startMusicTagFallback();
+    }
+    startMusicTagFallback() {
+      if (!this.bgm) return;
+      try {
+        this.bgm.loop = true;
+        this.bgm.muted = false;
+        this.bgm.volume = .55;
+        this.bgm.currentTime = this.bgm.currentTime || 0;
+        const p = this.bgm.play();
+        if (p && p.then) p.then(() => console.log("Amanda BGM started: audio tag")).catch(err => console.warn("Amanda BGM blocked:", err));
+      } catch (err) { console.warn("Amanda BGM tag error:", err); }
     }
     fadeMusic(target, dur = .22) {
-      if (!this.musicGain) return;
-      const t = this.ctx.currentTime;
-      this.musicGain.gain.cancelScheduledValues(t);
-      this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t);
-      this.musicGain.gain.linearRampToValueAtTime(target, t + dur);
+      const vol = Math.max(0, Math.min(.6, target));
+      if (this.bgmGain) this.bgmGain.gain.value = vol;
+      if (this.bgm) this.bgm.volume = vol;
     }
     stopMusic() {
-      if (!this.ctx || !this.bgm) return;
-      const src = this.bgm; this.fadeMusic(0, .25);
-      setTimeout(() => { try { src.stop(); } catch (_) {} if (this.bgm === src) this.bgm = null; }, 270);
+      if (this.bgmSource) { try { this.bgmSource.stop(); } catch (_) {} this.bgmSource = null; this.bgmGain = null; }
+      if (this.bgm) { try { this.bgm.pause(); } catch (_) {} }
     }
   }
 
@@ -143,9 +259,10 @@
         this.addHint();
         this.showOverlay("Siap Bermain?", "Tujuan: " + this.goalText, "Mulai", this.startDetails(cfg.mode));
       }
-      const unlock = () => { this.audio.init(); this.audio.startMusic(); };
-      document.addEventListener("pointerdown", unlock, { once: true, passive: true });
-      document.addEventListener("touchstart", unlock, { once: true, passive: true });
+      const unlock = () => { this.audio.unlock(); };
+      document.addEventListener("pointerdown", unlock, { passive: true });
+      document.addEventListener("touchstart", unlock, { passive: true });
+      document.addEventListener("click", unlock, { passive: true });
     }
     bindUI() {
       document.querySelectorAll("[data-ui]").forEach(btn => {
@@ -153,11 +270,11 @@
         btn.title = btn.getAttribute("aria-label") || btn.dataset.ui;
       });
       this.decorateHud();
-      this.$("btnStart").addEventListener("click", () => { this.audio.play("click", 520); this.start(); });
+      this.$("btnStart").addEventListener("click", () => { this.audio.unlock(); this.audio.play("click", 520); this.audio.startMusic(); this.start(); });
       this.$("btnPause").addEventListener("click", () => { this.audio.play("click", 520); this.togglePause(); });
       this.$("btnRestart").addEventListener("click", () => { this.audio.play("click", 520); this.restart(); });
-      this.$("btnMusic").addEventListener("click", () => { this.audio.play("click", 520); this.audio.musicOn = !this.audio.musicOn; this.audio.musicOn ? this.audio.startMusic() : this.audio.stopMusic(); this.flash(this.audio.musicOn ? "Music on" : "Music off"); });
-      this.$("btnSound").addEventListener("click", () => { this.audio.soundOn = !this.audio.soundOn; this.audio.play("click", 520); this.flash(this.audio.soundOn ? "Sound on" : "Sound off"); });
+      this.$("btnMusic").addEventListener("click", () => { this.audio.play("click", 520); this.audio.musicOn = !this.audio.musicOn; localStorage.setItem("amandaMusicOff", this.audio.musicOn ? "0" : "1"); this.audio.musicOn ? this.audio.startMusic() : this.audio.stopMusic(); this.flash(this.audio.musicOn ? "Music on" : "Music off"); });
+      this.$("btnSound").addEventListener("click", () => { this.audio.soundOn = !this.audio.soundOn; localStorage.setItem("amandaSoundOff", this.audio.soundOn ? "0" : "1"); this.audio.play("click", 520); this.flash(this.audio.soundOn ? "Sound on" : "Sound off"); });
       this.$("btnHome").addEventListener("click", () => { this.audio.play("click", 520); location.href = "../../index.html"; });
       if (this.$("btnNext")) this.$("btnNext").addEventListener("click", () => { this.audio.play("click", 520); location.href = this.cfg.next || "../../index.html"; });
       document.querySelectorAll("[data-dir]").forEach(btn => {
