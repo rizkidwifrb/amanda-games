@@ -1,0 +1,1 @@
+new AmandaArcade.Arcade({chapter:"Bab 9",title:"Susun Nama Amanda",mode:"hidden",intro:"Tap kartu huruf sampai nama AMANDA lengkap.",goal:6,lives:3,next:"../bab-10-kartu-ingatan/index.html"});
